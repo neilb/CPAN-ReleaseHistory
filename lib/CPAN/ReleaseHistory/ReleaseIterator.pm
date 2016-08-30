@@ -39,28 +39,24 @@ sub next_release
     }
 
     RELEASE:
-    while (1) {
-        my $line = <$fh>;
+    while ( my $line = <$fh> ) {
+        chomp($line);
+        my ($path, $time, $size) = split(/\s+/, $line);
+        my @args                 = (path => $path, timestamp => $time, size => $size);
 
-        if (defined($line)) {
-            chomp($line);
-            my ($path, $time, $size) = split(/\s+/, $line);
-            my @args                 = (path => $path, timestamp => $time, size => $size);
+        if ($self->well_formed) {
+            my $distinfo = CPAN::DistnameInfo->new($path);
 
-            if ($self->well_formed) {
-                my $distinfo = CPAN::DistnameInfo->new($path);
-
-                next RELEASE unless defined($distinfo)
-                                 && defined($distinfo->dist)
-                                 && defined($distinfo->cpanid);
-                push(@args, distinfo => $distinfo);
-            }
-
-            return CPAN::ReleaseHistory::Release->new(@args);
-        } else {
-            return undef;
+            next RELEASE unless defined($distinfo)
+                     && defined($distinfo->dist)
+                     && defined($distinfo->cpanid);
+            push(@args, distinfo => $distinfo);
         }
+
+        return CPAN::ReleaseHistory::Release->new(@args);
     }
+
+    return undef;
 }
 
 1;
